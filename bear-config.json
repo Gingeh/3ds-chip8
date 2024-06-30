@@ -1,0 +1,11 @@
+{
+    "compilation": {
+        "compilers_to_recognize": [
+            {
+                "executable": "/opt/devkitpro/devkitARM/bin/arm-none-eabi-gcc",
+                "flags_to_remove": ["-mword-relocations"],
+                "flags_to_add": ["-I/usr/include", "-I/opt/devkitpro/devkitARM/arm-none-eabi/include"]
+            }
+        ]
+    }
+}
