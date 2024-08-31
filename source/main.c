@@ -1,5 +1,6 @@
 #include "c2d/base.h"
-#include "display.h"
+#include "system.h"
+#include "rom.h"
 
 int main(int argc, char *argv[]) {
   gfxInitDefault();
@@ -7,8 +8,11 @@ int main(int argc, char *argv[]) {
   C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
   C2D_Prepare();
 
+  consoleInit(GFX_BOTTOM, NULL);
+
   C3D_RenderTarget *top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
-  Display display = display_create();
+  System system = system_create();
+  system_load_rom(system, rom, rom_len);
 
   while (aptMainLoop()) {
     hidScanInput();
@@ -17,17 +21,20 @@ int main(int argc, char *argv[]) {
     if (kDown & KEY_START)
       break;
 
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
-    C2D_SceneBegin(top);
+    system_tick(system);
 
-    display_draw(display);
+    if (C3D_FrameBegin(C3D_FRAME_NONBLOCK)) {
+      C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
+      C2D_SceneBegin(top);
 
-    C2D_Flush();
-    C3D_FrameEnd(0);
+      system_draw(system);
+
+      C2D_Flush();
+      C3D_FrameEnd(0);
+    }
   }
 
-  display_destroy(display);
+  system_destroy(system);
   C2D_Fini();
   C3D_Fini();
   gfxExit();
