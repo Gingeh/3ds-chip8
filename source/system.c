@@ -12,6 +12,7 @@ struct System_s {
   u8 registers[16];
   u16 stack[16];
   u8 stack_len;
+  u64 delay;
 };
 
 const size_t memory_size = 0x1000;
@@ -21,13 +22,13 @@ System system_create() {
   System system = malloc(sizeof(struct System_s));
   system->display = display_create();
   system->memory = calloc(memory_size, sizeof(u8));
+  memcpy(system->memory + font_offset, font, font_len);
   system->counter = 0x200;
   system->index = 0;
   memset(system->registers, 0, sizeof(u8[16]));
   memset(system->stack, 0, sizeof(u16[16]));
   system->stack_len = 0;
-
-  memcpy(system->memory + font_offset, font, font_len);
+  system->delay = 0;
 
   return system;
 }
@@ -289,7 +290,12 @@ void system_tick(System system) {
     switch (instruction & 0x00FF) {
     case 0x07: {
       // FX07: read delay
-      // TODO
+      u8 x_reg = (instruction & 0x0F00) >> 8;
+      u64 remaining_ms = system->delay - osGetTime();
+      if (remaining_ms > (255 * 100) / 6) {
+        remaining_ms = 0;
+      }
+      system->registers[x_reg] = (remaining_ms * 6) / 100;
       break;
     }
     case 0x0A: {
@@ -299,7 +305,9 @@ void system_tick(System system) {
     }
     case 0x15: {
       // FX15: set delay
-      // TODO
+      u8 x_reg = (instruction & 0x0F00) >> 8;
+      u64 ticks = system->registers[x_reg];
+      system->delay = osGetTime() + (ticks * 100) / 6;
       break;
     }
     case 0x18: {

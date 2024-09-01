@@ -1,6 +1,6 @@
 #include "c2d/base.h"
-#include "system.h"
 #include "rom.h"
+#include "system.h"
 #include <stdlib.h>
 
 int main(int argc, char *argv[]) {
