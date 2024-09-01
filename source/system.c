@@ -1,6 +1,7 @@
 #include "system.h"
 #include "display.h"
 #include "font.h"
+#include "keypad.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -275,12 +276,18 @@ void system_tick(System system) {
     switch (instruction & 0x00FF) {
     case 0x9E: {
       // EX9E: skip if pressed
-      // TODO
+      u8 x_reg = (instruction & 0x0F00) >> 8;
+      if (system->registers[x_reg] == keypad_held()) {
+        system->counter += 2;
+      }
       break;
     }
     case 0xA1: {
       // EXA1: skip if not pressed
-      // TODO
+      u8 x_reg = (instruction & 0x0F00) >> 8;
+      if (system->registers[x_reg] != keypad_held()) {
+        system->counter += 2;
+      }
       break;
     }
     }
@@ -300,7 +307,14 @@ void system_tick(System system) {
     }
     case 0x0A: {
       // FX0A: wait for key
-      // TODO
+      int key = keypad_released();
+      if (key == -1) {
+        // try again next tick
+        system->counter -= 2;
+      } else {
+        u8 x_reg = (instruction & 0x0F00) >> 8;
+        system->registers[x_reg] = key;
+      }
       break;
     }
     case 0x15: {
