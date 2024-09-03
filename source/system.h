@@ -1,10 +1,11 @@
-#include <3ds.h>
+#pragma once
 
-typedef struct System_s *System;
+#include "3ds/types.h"
+#include "c3d/renderqueue.h"
 
-System system_create();
-void system_destroy(System);
+typedef struct {
+  u8 *ptr;
+  size_t len;
+} Rom;
 
-void system_load_rom(System, u8 *, size_t);
-void system_tick(System);
-void system_draw(System);
+void system_run(Rom rom, C3D_RenderTarget *top, C3D_RenderTarget *bottom);

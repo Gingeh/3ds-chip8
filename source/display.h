@@ -1,3 +1,5 @@
+#pragma once
+
 #include <3ds.h>
 
 typedef struct Display_s *Display;

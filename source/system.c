@@ -1,11 +1,11 @@
 #include "system.h"
+#include "c2d/base.h"
 #include "display.h"
 #include "font.h"
 #include "keypad.h"
 #include <stdlib.h>
-#include <string.h>
 
-struct System_s {
+typedef struct System_s {
   Display display;
   u8 *memory;
   u16 counter;
@@ -14,7 +14,7 @@ struct System_s {
   u16 stack[16];
   u8 stack_len;
   u64 delay;
-};
+} *System;
 
 const size_t memory_size = 0x1000;
 const size_t font_offset = 0x0050;
@@ -40,10 +40,11 @@ void system_destroy(System system) {
   free(system);
 }
 
-void system_load_rom(System system, u8 *rom, size_t size) {
-  if (size > memory_size - 0x200)
-    size = memory_size - 0x200;
-  memcpy(system->memory + 0x200, rom, size);
+void system_load_rom(System system, Rom rom) {
+  size_t len = rom.len;
+  if (len > memory_size - 0x200)
+    len = memory_size - 0x200;
+  memcpy(system->memory + 0x200, rom.ptr, len);
 }
 
 void system_tick(System system) {
@@ -378,3 +379,35 @@ void system_tick(System system) {
 }
 
 void system_draw(System system) { display_draw(system->display); }
+
+void system_run(Rom rom, C3D_RenderTarget *top, C3D_RenderTarget *bottom) {
+  System system = system_create();
+  system_load_rom(system, rom);
+
+  while (aptMainLoop()) {
+    hidScanInput();
+
+    u32 kDown = hidKeysDown();
+    if (kDown & KEY_B)
+      break;
+
+    system_tick(system);
+
+    if (C3D_FrameBegin(C3D_FRAME_NONBLOCK)) {
+      C2D_TargetClear(top, C2D_Color32(0, 0, 0, 255));
+      C2D_SceneBegin(top);
+
+      system_draw(system);
+
+      C2D_TargetClear(bottom, C2D_Color32(0, 0, 0, 255));
+      C2D_SceneBegin(bottom);
+
+      keypad_draw();
+
+      C2D_Flush();
+      C3D_FrameEnd(0);
+    }
+  }
+
+  system_destroy(system);
+}

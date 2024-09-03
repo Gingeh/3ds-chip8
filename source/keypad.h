@@ -1,3 +1,4 @@
+#pragma once
 
 void keypad_init();
 void keypad_fini();
